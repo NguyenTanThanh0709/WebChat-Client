@@ -7,7 +7,7 @@ import useQueryConfig from 'src/hooks/useQueryConfig'
 import { ProductListConfig, Product as ProductType } from 'src/types/product.type'
 import AsideFilter from './components/AsideFilter'
 import AsideFilterMessage from './components/AsideFilterMessage'
-import Product from './components/User/User'
+import User from './components/User/User'
 import SortProductList from './components/SortUserList'
 import { Head } from 'src/components/head'
 import ChatBox from './components/ChatBox'
@@ -61,7 +61,7 @@ export default function UserList() {
               <div className='mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4'>
                 {productsData.data.data.products.map((product: ProductType) => (
                   <div className='col-span-1' key={product._id}>
-                    <Product product={product} />
+                    <User product={product} />
                   </div>
                 ))}
               </div>

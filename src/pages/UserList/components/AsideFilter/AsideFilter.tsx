@@ -58,43 +58,49 @@ export default function AsideFilter({ categories, queryConfig }: Props) {
     shouldFocusError: false
   })
   return (
-    <div className='fixed left-0 top-[8rem] z-20 h-[calc(100vh-8rem)] w-[260px] rounded-sm border-2 bg-white p-4 shadow-md'>
-      <Link to={path.home} className=' flex items-center font-bold'>
-        <TfiMenuAlt className='mr-3 h-4 w-3 fill-current' />
-        {t('aside filter.all categories')}
-      </Link>
-      <div className='mt-4 mb-2 h-[1px] bg-gray-300' />
-      <ul className='pl-2'>
-        {categories.map((categoryItem) => {
-          const isActive = categoryItem._id === category
-          return (
-            <li key={categoryItem._id} className='py-2'>
-              <Link
-                to={{
-                  pathname: path.home,
-                  // when we use searchParams, we need to convert it to string and
-                  // spread properties of queryConfig( it have query params exits)
-                  search: createSearchParams({
-                    ...queryConfig,
-                    category: categoryItem._id
-                  }).toString()
-                }}
-                className={clsx('relative flex items-center px-2', {
-                  'font-semibold text-orange': isActive
-                })}
-              >
-                {isActive && (
-                  <svg viewBox='0 0 4 7' className='tp[-1 absolute left-[-10px] mr-2 h-2 w-2 fill-orange'>
-                    <polygon points='4 3.5 0 0 0 7' />
-                  </svg>
-                )}
-                <span>{categoryItem.icon} {categoryItem.name}</span>
-              </Link>
-            </li>
-          )
-        })}
-      </ul>
+<div className="fixed left-0 top-[8rem] z-20 h-[calc(100vh-8rem)] w-[260px] rounded-2xl border bg-white p-5 shadow-lg">
+    <Link
+      to={path.home}
+      className="flex items-center gap-2 text-base font-semibold text-gray-800 hover:text-orange transition-colors"
+    >
+      <TfiMenuAlt className="h-5 w-5" />
+      {t('aside filter.all categories')}
+    </Link>
 
-    </div>
+    <div className="my-4 h-px w-full bg-gray-200" />
+
+    <ul className="space-y-3">
+      {categories.map((categoryItem) => {
+        const isActive = categoryItem._id === category
+        return (
+          <li key={categoryItem._id}>
+            <Link
+              to={{
+                pathname: path.home,
+                search: createSearchParams({
+                  ...queryConfig,
+                  category: categoryItem._id
+                }).toString()
+              }}
+              className={clsx(
+                'group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                {
+                  'bg-orange/10 text-orange font-semibold': isActive,
+                  'text-gray-700 hover:bg-gray-100 hover:text-orange': !isActive
+                }
+              )}
+            >
+              {isActive && (
+                <span className="absolute left-0 top-1/2 h-2 w-2 -translate-y-1/2 translate-x-[-50%] rounded-full bg-orange" />
+              )}
+              <span className="text-base">{categoryItem.icon}</span>
+              <span>{categoryItem.name}</span>
+            </Link>
+          </li>
+        )
+      })}
+    </ul>
+  </div>
+    
   )
 }

@@ -1,3 +1,3 @@
-import Product from './User'
+import User from './User'
 
-export default Product
+export default User
