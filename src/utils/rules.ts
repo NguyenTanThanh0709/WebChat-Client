@@ -84,6 +84,11 @@ export const AuthSchema = yup.object({
     .email('Email does not correct format')
     .min(5, 'Email must have at least 5 characters')
     .max(160, 'Email must have at most 160 characters'),
+  phone: yup
+    .string()
+    .required('Phone does not exist')
+    .min(10, 'Phone must have at least 10 characters')
+    .max(11, 'Phone must have at most 11 characters'),
   password: yup
     .string()
     .matches(

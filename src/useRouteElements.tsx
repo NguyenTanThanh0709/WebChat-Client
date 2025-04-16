@@ -7,6 +7,7 @@ import RegisterLayout from './layouts/RegisterLayout'
 import UserLayout from './pages/User/layouts/UserLayout'
 
 const Login = lazy(() => import('./pages/Login'))
+const UserProfile = lazy(() => import('./pages/UserProfile'))
 const UserList = lazy(() => import('./pages/UserList'))
 const Profile = lazy(() => import('./pages/User/pages/Profile'))
 const Register = lazy(() => import('./pages/Register'))
@@ -79,6 +80,15 @@ export default function useRouteElements() {
       element: (
         <MainLayout>
           <UserList />
+        </MainLayout>
+      )
+    },
+    {
+      path: '/user-profile',
+      index: true,
+      element: (
+        <MainLayout>
+          <UserProfile />
         </MainLayout>
       )
     },

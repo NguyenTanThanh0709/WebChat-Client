@@ -228,11 +228,13 @@ export default function Header() {
                               <img
                                 src='data:image/jpeg;base64,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'
                                 alt={purchase.product.name}
-                                className='h-11 w-11 object-cover'
+                                className="h-12 w-12 object-cover rounded-full"
                               />
                             </div>
-                            <div className='ml-2 flex-grow overflow-hidden'>
-                              <div className='truncate'>Nguyễn Tấn Thành sent you message</div>
+                            <div className="ml-3 flex-grow overflow-hidden">
+                              <div className="text-sm font-medium truncate text-gray-800">
+                              Nguyễn Tấn Thành sent you message
+                              </div>
                             </div>
                             <div className='ml-2 flex-shrink-0'>
                               <span className='text-orange'>2025/03/20 12:03</span>
@@ -242,14 +244,16 @@ export default function Header() {
                       </div>
                       <div className='mt-6 flex items-center justify-between'>
                         <div className='text-xs capitalize text-gray-500'>
-                          {purchasesInCart.length > MAX_PURCHASES ? purchasesInCart.length - MAX_PURCHASES : ''} Đánh giấu đã đọc
+                          {purchasesInCart.length > MAX_PURCHASES && (
+                              <span>{purchasesInCart.length - MAX_PURCHASES} more marked as read</span>
+                            )}
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div className='flex h-[300px] w-[300px] flex-col items-center justify-center p-2'>
                       <img src={noproduct} alt='no purchase' className='h-24 w-24' />
-                      <div className='mt-3 capitalize'>Chưa có sản phẩm</div>
+                      <div className='mt-3 capitalize'>Chưa có thông báo</div>
                     </div>
                   )}
                 </div>

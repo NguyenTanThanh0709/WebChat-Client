@@ -9,6 +9,8 @@ export interface User {
   avatar?: string
   address?: string
   phone?: string
+  status?: string
+  password_hash?: string
   createdAt: string
   updatedAt: string
 }

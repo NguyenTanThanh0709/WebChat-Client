@@ -12,8 +12,8 @@ import { useContext } from 'react'
 import { AppContext } from 'src/contexts/app.context'
 import Button from 'src/components/Button'
 
-type FormData = Pick<IAuthSchema, 'email' | 'password' | 'confirm_password' |  'term_of_use'>
-export const registerSchema = AuthSchema.pick(['email', 'password', 'confirm_password', 'term_of_use'])
+type FormData = Pick<IAuthSchema, 'email' |'phone' | 'password' | 'confirm_password' |  'term_of_use'>
+export const registerSchema = AuthSchema.pick(['email', 'phone', 'password', 'confirm_password', 'term_of_use'])
 export default function Register() {
   const {
     handleSubmit,
@@ -42,7 +42,7 @@ export default function Register() {
         console.log('dataRegister Mutation', data)
         setIsAuthenticated(true)
         setProfile(data.data.data.user)
-        navigate('/')
+        navigate('/login')
       },
       onError: (error) => {
         if (isAxiosUnprocessableEntityError<SuccessResponse<Omit<IAuthSchema, 'confirm_password'>>>(error)) {
@@ -76,9 +76,9 @@ export default function Register() {
     })
   })
   return (
-    <div className='h-[600px] bg-lime-200'>
+    <div className='h-[670px] bg-lime-200'>
       <div className="container bg-[url('https://salt.tikicdn.com/ts/upload/df/48/21/b4d225f471fe06887284e1341751b36e.png')] bg-contain bg-center bg-no-repeat">
-        <div className='grid grid-cols-1 py-12 lg:h-[470px] lg:grid-cols-5 lg:pr-10'>
+        <div className='grid grid-cols-1 py-12 lg:h-[500px] lg:grid-cols-5 lg:pr-10'>
           <div className='md:col-span-2 md:col-start-4 md:mx-8'>
             <form className='rounded bg-white p-10 shadow-sm' onSubmit={onSubmit} noValidate>
               <div className='text-2xl'>ĐĂNG KÝ</div>
@@ -89,6 +89,14 @@ export default function Register() {
                 name='email'
                 register={register}
                 errorMessage={errors.email?.message}
+              />
+              <Input
+                className='mt-6'
+                type='text'
+                placeholder='Phone'
+                name='phone'
+                register={register}
+                errorMessage={errors.phone?.message}
               />
               <Input
                 className='mt-2'
