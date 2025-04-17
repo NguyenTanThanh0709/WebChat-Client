@@ -1,5 +1,5 @@
 import { User } from 'src/types/user.type'
-import { SuccessResponse } from 'src/types/utils.type'
+import { SuccessResponse, changePassword } from 'src/types/utils.type'
 import http from 'src/utils/http'
 
 interface BodyUpdateProfile extends Omit<User, '_id' | 'roles' | 'createdAt' | 'updatedAt' | 'email'> {
@@ -8,18 +8,14 @@ interface BodyUpdateProfile extends Omit<User, '_id' | 'roles' | 'createdAt' | '
 }
 
 const userApi = {
-  getProfile() {
-    return http.get<SuccessResponse<User>>('me')
+  getProfile(phone: string) {
+    return http.get<SuccessResponse<User>>(`/api/user/profile/${phone}`)
   },
-  updateProfile(body: BodyUpdateProfile) {
-    return http.put<SuccessResponse<User>>('user', body)
+  updateProfile(phone: string, body: BodyUpdateProfile) {
+    return http.put<SuccessResponse<User>>(`/api/user/profile/${phone}`, body)
   },
-  uploadAvatar(body: FormData) {
-    return http.post<SuccessResponse<string>>('user/upload-avatar', body, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+  changepassword(body: changePassword, phone: string) {
+    return http.patch<String>(`/api/user/profile/${phone}/password`, body);
   }
 }
 

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import Popover from 'src/components/Popover'
 import path from 'src/constants/path'
-import { Product as ProductType } from 'src/types/product.type'
+import { UserT as ProductType } from 'src/types/product.type'
 import { generateNameId } from 'src/utils/utils'
 
 interface Props {
@@ -62,8 +62,8 @@ export default function User({ product }: Props) {
         </p>
         <Link
           to={`${path.home}${generateNameId({
-            name: product.name,
-            id: product._id
+            name: product.name as string,
+            id: product.phone as string
           })}`}
           className='mt-2 inline-block rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-orange-600'
         >

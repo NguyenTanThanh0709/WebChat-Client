@@ -1,31 +1,25 @@
-export interface Product {
-  _id: string
-  images: string[]
-  price: number
-  rating: number
-  price_before_discount: number
-  quantity: number
-  sold: number
-  view: number
-  name: string
-  description: string
-  category: {
-    _id: string
-    name: string
-  }
-  image: string
+export interface UserT {
+  email: string
+  name?: string
+  date_of_birth?: string // ISO 8610
+  avatar?: string
+  address?: string
+  phone?: string
+  status?: string
+  password_hash?: string
   createdAt: string
   updatedAt: string
 }
-export interface ProductList {
-  products: Product[]
+export interface UserTList {
+  users: UserT[]
   pagination: {
     page: number
     limit: number
     page_size: number
   }
 }
-export interface ProductListConfig {
+
+export interface UserTListConfig {
   page?: number | string
   limit?: number | string
   sort_by?: 'createdAt' | 'price' | 'rating' | 'sold' | 'view'

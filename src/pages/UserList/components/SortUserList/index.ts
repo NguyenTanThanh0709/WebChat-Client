@@ -1,3 +1,3 @@
-import SortProductList from './SortUserList'
+import SortUserList from './SortUserList'
 
-export default SortProductList
+export default SortUserList

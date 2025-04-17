@@ -11,3 +11,9 @@ export interface SuccessResponse<Data> {
 export type NoUndefinedField<T> = {
   [P in keyof T]-?: NoUndefinedField<NonNullable<T[P]>>
 }
+
+export interface changePassword {
+  confirm_password: string | undefined;
+  new_password: string | undefined;
+  password: string | undefined;
+}

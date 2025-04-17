@@ -3,13 +3,17 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { Fragment, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { storage } from 'src/configs/firebase';
 
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from "uuid"; // npm install uuid
 import Button from 'src/components/Button'
 import Input from 'src/components/Input'
 
 import InputNumber from 'src/components/InputNumber'
 import { AppContext } from 'src/contexts/app.context'
 import { ErrorResponse } from 'src/types/utils.type'
+import { User } from 'src/types/user.type'
 import { setProfileToLS } from 'src/utils/auth'
 
 import userApi from 'src/apis/user.api'
@@ -44,6 +48,7 @@ function Info() {
                 placeholder='Số điện thoại'
                 errorMessage={errors.phone?.message}
                 {...field}
+                disabled={true}
                 onChange={field.onChange}
               />
             )}
@@ -72,19 +77,35 @@ const profileSchema = userSchema.pick(['name', 'address', 'phone', 'date_of_birt
 export default function Profile() {
   const { setProfile } = useContext(AppContext)
   const [file, setFile] = useState<File>()
+  const [avatarName, setAvatarName] = useState<string>()
 
   const previewImage = useMemo(() => {
     return file ? URL.createObjectURL(file) : ''
   }, [file])
 
-  const { data: profileData, refetch } = useQuery({
+  const { data: profileDataLS, refetch } = useQuery<User>({
     queryKey: ['profile'],
-    queryFn: userApi.getProfile
+    queryFn: async () => {
+      const raw = localStorage.getItem('profile');
+      if (!raw) throw new Error('No profile found in localStorage');
+      return JSON.parse(raw) as User;
+    },
+  });
+
+  const { data: profileData, refetch: refetchProfile } = useQuery({
+    queryKey: ['profile', profileDataLS?.phone],
+    queryFn: () => userApi.getProfile(profileDataLS?.phone as string),
+    enabled: !!profileDataLS?.phone
   })
+
   const profile = profileData?.data.data
 
-  const updateProfileMutation = useMutation(userApi.updateProfile)
-  const uploadAvatarMutaion = useMutation(userApi.uploadAvatar)
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: FormData) => userApi.updateProfile(profile?.phone as string, {
+      ...data,
+      date_of_birth: data.date_of_birth?.toISOString()
+    })
+  })
   const methods = useForm<FormData>({
     defaultValues: {
       name: '',
@@ -111,24 +132,22 @@ export default function Profile() {
     if (profile) {
       setValue('name', profile.name)
       setValue('phone', profile.phone)
-      setValue('address', profile.address)
+      setValue('address', "Hồ Chí Minh")
       setValue('avatar', profile.avatar)
       setValue('date_of_birth', profile.date_of_birth ? new Date(profile.date_of_birth) : new Date(1990, 0, 1))
     }
   }, [profile, setValue])
   const onSubmit = handleSubmit(async (data) => {
+    event?.preventDefault();
+    console.log('data', data)
     try {
-      let avatarName = avatar
-      if (file) {
-        const form = new FormData()
-        form.append('image', file)
-        const uploadRes = await uploadAvatarMutaion.mutateAsync(form)
-        avatarName = uploadRes.data.data
-        setValue('avatar', avatarName)
-      }
-      const res = await updateProfileMutation.mutateAsync({
+      console.log('data', {
         ...data,
         date_of_birth: data.date_of_birth?.toISOString(),
+        avatar: avatarName
+      } )
+      const res = await updateProfileMutation.mutateAsync({
+        ...data,
         avatar: avatarName
       })
       setProfile(res.data.data)
@@ -136,7 +155,6 @@ export default function Profile() {
       refetch()
       toast.success(res.data.message)
     } catch (error) {
-      console.log(error)
       if (isAxiosUnprocessableEntityError<ErrorResponse<FormDataError>>(error)) {
         const formError = error.response?.data.data
         if (formError) {
@@ -150,11 +168,43 @@ export default function Profile() {
 
   const handleChangeFile = (file?: File | undefined) => {
     setFile(file)
+    if (file) {
+      handleUpload(file)
+    }
   }
+
+  const handleUpload = async (file: File) => {
+    if (file) {
+      const uniqueId = uuidv4();
+  
+      try {
+        const storageRef = ref(storage, `images/${uniqueId}_${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+  
+        alert('File uploaded successfully!');
+        // setImagePreviews([downloadURL]); // Vì chỉ 1 file, dùng mảng có 1 phần tử
+        setValue('avatar', downloadURL)
+        setAvatarName(downloadURL)
+        return downloadURL;
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Error uploading file.');
+        return null;
+      } finally {
+        // setLoading(false);
+      }
+    } else {
+      alert('No file selected.');
+      return null;
+    }
+  };
+  
+
   return (
     <div className='rounded-sm bg-white px-2 pb-10 shadow md:px-7 md:pb-20'>
       <div className='border-b border-b-gray-200 py-6'>
-        <h1 className='text-lg font-medium capitalize text-gray-900'>Hồ Sơ Của Tôi</h1>
+        <h1 className='text-lg  font-medium capitalize text-gray-900'>Hồ Sơ Của Tôi</h1>
         <div className='mt-1 text-sm text-gray-700'>Quản lý thông tin hồ sơ để bảo mật tài khoản</div>
       </div>
       <FormProvider {...methods}>
@@ -206,7 +256,7 @@ export default function Profile() {
             <div className='flex flex-col items-center'>
               <div className='my-5 h-24 w-24'>
                 <img
-                  src={file ? previewImage : getAvatarUrl(avatar)}
+                  src={profile?.avatar}
                   alt='avatar'
                   className='h-full w-full rounded-full object-cover'
                 />

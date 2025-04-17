@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import omit from 'lodash/omit'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
@@ -7,12 +7,16 @@ import userApi from 'src/apis/user.api'
 import Button from 'src/components/Button'
 import Input from 'src/components/Input'
 import { ErrorResponse } from 'src/types/utils.type'
+import { User } from 'src/types/user.type'
 import { userSchema, UserSchema } from 'src/utils/rules'
 import { isAxiosUnprocessableEntityError } from 'src/utils/utils'
 
-type FormData = Pick<UserSchema, 'password' | 'new_password' | 'confirm_password'>
 const passwordSchema = userSchema.pick(['password', 'new_password', 'confirm_password'])
-
+interface FormData {
+  password: string; // Required
+  new_password: string; // Required
+  confirm_password: string; // Required
+}
 export default function ChangePassword() {
   const {
     register,
@@ -28,13 +32,23 @@ export default function ChangePassword() {
     },
     resolver: yupResolver(passwordSchema)
   })
-  const updateProfileMutation = useMutation(userApi.updateProfile)
+  const { data: profileDataLS, refetch } = useQuery<User>({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const raw = localStorage.getItem('profile');
+      if (!raw) throw new Error('No profile found in localStorage');
+      return JSON.parse(raw) as User;
+    },
+  });
+
+  const updateProfileMutation = useMutation((body: FormData) => userApi.changepassword(body, profileDataLS?.phone as string));
 
   const onSubmit = handleSubmit(async (data) => {
+    console.log(data)
     try {
-      const res = await updateProfileMutation.mutateAsync(omit(data, ['confirm_password']))
-      toast.success(res.data.message)
-      reset()
+      const res = await updateProfileMutation.mutateAsync(data);
+      toast.success(res.data);
+      reset();
     } catch (error) {
       if (isAxiosUnprocessableEntityError<ErrorResponse<FormData>>(error)) {
         const formError = error.response?.data.data

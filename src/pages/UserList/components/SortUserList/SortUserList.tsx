@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { createSearchParams, Link, useNavigate } from 'react-router-dom'
 import { order as orderConstant, sortBy } from 'src/constants/product'
-import { ProductListConfig } from 'src/types/product.type'
+import { UserTListConfig } from 'src/types/product.type'
 
 import omit from 'lodash/omit'
 import path from 'src/constants/path'
@@ -12,17 +12,17 @@ interface Props {
   pageSize: number
 }
 
-export default function SortProductList({ queryConfig, pageSize }: Props) {
+export default function SortUserList({ queryConfig, pageSize }: Props) {
   const page = Number(queryConfig.page)
   const { sort_by = sortBy.view, order } = queryConfig
   const navigate = useNavigate()
 
   // Explain Exclude is ignore undefined type with sort_by
-  const isActiveSortBy = (sortByValue: Exclude<ProductListConfig['sort_by'], undefined>) => {
+  const isActiveSortBy = (sortByValue: Exclude<UserTListConfig['sort_by'], undefined>) => {
     return sort_by === sortByValue
   }
 
-  const handleSort = (sortByValue: Exclude<ProductListConfig['sort_by'], undefined>) => {
+  const handleSort = (sortByValue: Exclude<UserTListConfig['sort_by'], undefined>) => {
     navigate({
       pathname: path.home,
       search: createSearchParams(
