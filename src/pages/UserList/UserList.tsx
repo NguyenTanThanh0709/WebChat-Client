@@ -1,12 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery  } from '@tanstack/react-query'
 // import productApi from 'src/apis/product.api'
-
+import { useState } from 'react'
 // import categoryApi from 'src/apis/categoriest'
 import Pagination from 'src/components/Pagination'
 import useQueryConfig from 'src/hooks/useQueryConfig'
 import { UserTListConfig, UserT as ProductType } from 'src/types/product.type'
 import AsideFilter from './components/AsideFilter'
 import AsideFilterMessage from './components/AsideFilterMessage'
+import AsideFilterMessageGroup from './components/AsideFilterMessageGroup'
 import User from './components/User/User'
 import SortProductList from './components/SortUserList'
 import { Head } from 'src/components/head'
@@ -39,19 +40,42 @@ export default function UserList() {
     { _id: '3', name: 'Tìm kiếm người dùng', icon:'💻' }
   ]
 
+    // ✅ Bắt đầu dùng useState để lưu category đang chọn
+    const [selectedCategory, setSelectedCategory] = useState('1')
+      // ✅ Hàm xử lý khi người dùng chọn category
+  const handleChangeCategory = (categoryId: string) => {
+    setSelectedCategory(categoryId)
+  }
+
   return (
     <div className='bg-gray-200 py-6'>
       <Head title={'Trang chủ | Shopee Clone'} />
       <div className='container-fluid'>
         <div className=' grid grid-cols-12 gap-6'>
           <div className='col-span-5'>
-            <AsideFilter queryConfig={queryConfig} categories={categoriesDataFEATURE || []} />
-            <AsideFilterMessage queryConfig={queryConfig} categories={categoriesDataFEATURE || []} />
+
+
+            <AsideFilter
+              categories={categoriesDataFEATURE}
+              selectedCategory={selectedCategory}
+              onChangeCategory={handleChangeCategory}
+            />
+
+            {/* categoriesDataFEATURE có id = 1 thì hiện cái này */}
+            {(selectedCategory === '1' || selectedCategory === '3') && (
+              <AsideFilterMessage queryConfig={queryConfig} categories={categoriesDataFEATURE || []} />
+            )}
+            {/* categoriesDataFEATURE có id = 2 thì hiện cái này */}
+            {selectedCategory === '2' && (
+              <AsideFilterMessageGroup queryConfig={queryConfig} categories={categoriesDataFEATURE || []} />
+            )}
+
+
           </div>
 
-      {/* Nếu category === '3' thì hiển thị danh sách sản phẩm, ngược lại là ChatBox */}
-      {queryConfig.category === '3' ? (
-  <div> </div>
+      {/* Nếu category === '3' thì hiển thị danh sách sản phẩm */}
+      {selectedCategory === '3' ? (
+  <div>List User</div>
 
   // productsData && (
   //   <div className='sticky z-10 col-span-7'>
