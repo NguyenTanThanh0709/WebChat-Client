@@ -1,5 +1,5 @@
 import { useQuery  } from '@tanstack/react-query'
-// import productApi from 'src/apis/product.api'
+import userApi from 'src/apis/user.api'
 import { useState } from 'react'
 // import categoryApi from 'src/apis/categoriest'
 import Pagination from 'src/components/Pagination'
@@ -8,23 +8,34 @@ import { UserTListConfig, UserT as ProductType } from 'src/types/product.type'
 import AsideFilter from './components/AsideFilter'
 import AsideFilterMessage from './components/AsideFilterMessage'
 import AsideFilterMessageGroup from './components/AsideFilterMessageGroup'
-import User from './components/User/User'
 import SortProductList from './components/SortUserList'
 import { Head } from 'src/components/head'
 import ChatBox from './components/ChatBox'
+import { User } from 'src/types/user.type'
+import UserComponent from './components/User/User'
 
 export default function UserList() {
   const queryConfig = useQueryConfig()
-  // console.log('queryParam', queryParam)
-  // Product list use query to get data from server
-  // const { data: productsData } = useQuery({
-  //   queryKey: ['products', queryConfig],
-  //   queryFn: () => {
-  //     return productApi.getProducts({} as ProductListConfig)
-  //   },
-  //   keepPreviousData: true,
-  //   staleTime: 3 * 60 * 1000
-  // })
+
+  const { data: profileDataLS, refetch } = useQuery<User>({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const raw = localStorage.getItem('profile');
+      if (!raw) throw new Error('No profile found in localStorage');
+      return JSON.parse(raw) as User;
+    },
+  });
+
+  const { data: productsData } = useQuery({
+    queryKey: ['products', queryConfig],
+    queryFn: () => {
+      return userApi.getListUser(queryConfig as UserTListConfig, profileDataLS?.phone as string)
+    },
+    enabled: !!profileDataLS?.phone,
+    keepPreviousData: true,
+    staleTime: 3 * 60 * 1000
+  })
+  console.log(productsData?.data.data)
 
   // Product list use query to get data from server
   // const { data: categoriesData } = useQuery({
@@ -62,12 +73,15 @@ export default function UserList() {
             />
 
             {/* categoriesDataFEATURE có id = 1 thì hiện cái này */}
+
             {(selectedCategory === '1' || selectedCategory === '3') && (
-              <AsideFilterMessage queryConfig={queryConfig} categories={categoriesDataFEATURE || []} />
+              // <AsideFilterMessageGroup} />
+              <AsideFilterMessage selectedCategory={selectedCategory} />
             )}
+
             {/* categoriesDataFEATURE có id = 2 thì hiện cái này */}
             {selectedCategory === '2' && (
-              <AsideFilterMessageGroup queryConfig={queryConfig} categories={categoriesDataFEATURE || []} />
+              <AsideFilterMessageGroup selectedCategory={selectedCategory} />
             )}
 
 
@@ -75,32 +89,31 @@ export default function UserList() {
 
       {/* Nếu category === '3' thì hiển thị danh sách sản phẩm */}
       {selectedCategory === '3' ? (
-  <div>List User</div>
+          productsData ? (
+            <div className='sticky z-10 col-span-7'>
+              <SortProductList
+                queryConfig={queryConfig}
+                pageSize={productsData.data.data.pagination.page_size}
+              />
+              <div className='mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4'>
+                {productsData.data.data.users.map((product: ProductType) => (
+                  <div className='col-span-1' key={product.phone}>
+                    <UserComponent product={product} />
+                  </div>
+                ))}
+              </div>
+              <Pagination
+                queryConfig={queryConfig}  
+                pageSize={productsData.data.data.pagination.page_size}
+              />
+            </div>
+          ) : null
+        ) : (
+          <div className='sticky z-10 col-span-7'>
+            <ChatBox />
+          </div>
+        )}
 
-  // productsData && (
-  //   <div className='sticky z-10 col-span-7'>
-  //     <SortProductList
-  //       queryConfig={queryConfig}
-  //       pageSize={productsData.data.data.pagination.page_size}
-  //     />
-  //     <div className='mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4'>
-  //       {productsData.data.data.products.map((product: ProductType) => (
-  //         <div className='col-span-1' key={product._id}>
-  //           <User product={product} />
-  //         </div>
-  //       ))}
-  //     </div>
-  //     <Pagination
-  //       queryConfig={queryConfig}  
-  //       pageSize={productsData.data.data.pagination.page_size}
-  //     />
-  //   </div>
-
-) : (
-  <div className='sticky z-10 col-span-7'>
-    <ChatBox />
-  </div>
-)}
 
 
         </div>

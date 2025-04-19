@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { useForm } from 'react-hook-form'
 import moment from 'moment'
@@ -10,33 +11,45 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { NoUndefinedField } from 'src/types/utils.type'
 import { QueryConfig } from 'src/hooks/useQueryConfig'
 import { useTranslation } from 'react-i18next'
+import { useQuery  } from '@tanstack/react-query'
+import { User, FriendListResponse } from 'src/types/user.type'
+import friendApi from 'src/apis/friend.api'
+import { FriendTListConfig } from 'src/types/product.type'
 
-interface Props {
-  queryConfig: QueryConfig
-  categories: Category[]
+
+
+interface AsideFilterMessageProps {
+  selectedCategory: string
 }
 
-type FormData = NoUndefinedField<Pick<QueryConfig, 'price_min' | 'price_max'>>
 
-const priceSchema = AuthSchema.pick(['price_min', 'price_max'])
-
-export default function AsideFilter({ categories, queryConfig }: Props) {
-  const { t } = useTranslation('home')
-  const { category1 } = queryConfig
-  const {
-    control,
-    trigger,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm<FormData>({
-    defaultValues: {
-      price_min: '',
-      price_max: ''
+export default function AsideFilter({ selectedCategory }: AsideFilterMessageProps) {
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
+  const [searchName, setSearchName] = useState('')
+  const queryConfig: FriendTListConfig = {
+    name: searchName
+  }
+  
+  const { data: profileDataLS, refetch } = useQuery<User>({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const raw = localStorage.getItem('profile');
+      if (!raw) throw new Error('No profile found in localStorage');
+      return JSON.parse(raw) as User;
     },
-    resolver: yupResolver(priceSchema),
-    shouldFocusError: false
+  });
+
+
+  const phone = profileDataLS?.phone
+
+  const { data: friendList } = useQuery({
+    queryKey: ['friendList', phone, queryConfig],
+    queryFn: () => friendApi.getFriendList(queryConfig, phone as string),
+    enabled: selectedCategory === '1' && !!phone
   })
+
+  console.log(friendList)
+  
 
   // Dummy data
   const recipientUser = {
@@ -65,42 +78,55 @@ export default function AsideFilter({ categories, queryConfig }: Props) {
   }
 
   return (
-    <div className='fixed left-[16rem] top-[8rem] z-20 h-[calc(100vh-8rem)] w-[400px] overflow-y-auto rounded-sm border-2 bg-white p-4 shadow-md'>
+<div className='fixed left-[16rem] top-[8rem] z-20 h-[calc(100vh-8rem)] w-[400px] overflow-y-auto rounded-sm border-2 bg-white p-4 shadow-md'>
       <Link to={path.home} className='flex items-center font-bold'>
         <TfiMenuAlt className='mr-3 h-4 w-3 fill-current' />
         KẾT QUẢ BỘ LỌC
       </Link>
       <div className='mt-4 mb-2 h-[1px] bg-gray-300' />
 
+      <input
+  type="text"
+  value={searchName}
+  onChange={(e) => setSearchName(e.target.value)}
+  placeholder="Tìm kiếm bạn bè..."
+  className="mb-4 w-full p-3 border rounded-md bg-gray-100 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-gray-400 transition-all ease-in-out duration-200"
+  style={{
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+  }}
+/>
+
+
+
       <ul className='pl-2'>
-        {categories.map((categoryItem) => {
-          const isActive = categoryItem._id === category1
+        {friendList?.data.friends.map((friend) => {
+          const isActive = friend.phone === selectedFriendId
           return (
-            <li key={categoryItem._id} className='py-2'>
-              <Link
-                to={{
-                  pathname: path.home,
-                  search: createSearchParams({
-                    ...queryConfig,
-                    category1: categoryItem._id
-                  }).toString()
-                }}
-                className={clsx('relative flex flex-col space-y-2 px-2', {
-                  'font-semibold text-orange': isActive
-                })}
+            <li key={friend.phone} className='py-2 relative'>
+              <button
+                onClick={() => setSelectedFriendId(friend.phone as string || null)}
+                className='w-full text-left'
               >
                 {isActive && (
-                  <svg viewBox='0 0 4 7' className='absolute left-[-10px] top-2 mr-2 h-2 w-2 fill-orange'>
+                  <svg
+                    viewBox='0 0 4 7'
+                    className='absolute left-[-10px] top-2 mr-2 h-2 w-2 fill-orange'
+                  >
                     <polygon points='4 3.5 0 0 0 7' />
                   </svg>
                 )}
 
                 {/* User Message Card */}
-                <div className='flex items-center justify-between rounded-lg p-3 hover:bg-gray-100 transition-all duration-150'>
+                <div
+                  className={clsx(
+                    'flex items-center justify-between rounded-lg p-3 hover:bg-gray-100 transition-all duration-150',
+                    isActive && 'bg-orange-100'
+                  )}
+                >
                   <div className='flex items-center space-x-3'>
                     <div className='relative'>
                       <img
-                        src={recipientUser.avatar}
+                        src={friend.avatar}
                         alt='user-avatar'
                         className='h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm'
                       />
@@ -109,7 +135,7 @@ export default function AsideFilter({ categories, queryConfig }: Props) {
                       )}
                     </div>
                     <div>
-                      <div className='font-semibold text-sm text-gray-900'>{recipientUser.name}</div>
+                      <div className='font-semibold text-sm text-gray-900'>{friend.name}</div>
                       <div className='text-xs text-gray-500'>{truncateText(latestMessage.text)}</div>
                     </div>
                   </div>
@@ -125,7 +151,7 @@ export default function AsideFilter({ categories, queryConfig }: Props) {
                     )}
                   </div>
                 </div>
-              </Link>
+              </button>
             </li>
           )
         })}

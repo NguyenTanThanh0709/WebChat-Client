@@ -1,3 +1,3 @@
-import User from './User'
+import UserComponent from './User'
 
-export default User
+export default UserComponent

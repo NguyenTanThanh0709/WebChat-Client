@@ -1,5 +1,7 @@
 import { User } from 'src/types/user.type'
 import { SuccessResponse, changePassword } from 'src/types/utils.type'
+import { UserTListConfig, UserT as ProductType, UserTList } from 'src/types/product.type'
+
 import http from 'src/utils/http'
 
 interface BodyUpdateProfile extends Omit<User, '_id' | 'roles' | 'createdAt' | 'updatedAt' | 'email'> {
@@ -16,6 +18,10 @@ const userApi = {
   },
   changepassword(body: changePassword, phone: string) {
     return http.patch<String>(`/api/user/profile/${phone}/password`, body);
+  }
+  ,
+  getListUser(queryConfig: UserTListConfig, phone: string) {
+    return http.get<SuccessResponse<UserTList>>(`/api/user/paginate/${phone}`, {params: queryConfig})
   }
 }
 

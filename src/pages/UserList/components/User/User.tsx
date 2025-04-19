@@ -3,18 +3,25 @@ import Popover from 'src/components/Popover'
 import path from 'src/constants/path'
 import { UserT as ProductType } from 'src/types/product.type'
 import { generateNameId } from 'src/utils/utils'
+import dayjs from 'dayjs'
 
 interface Props {
   product: ProductType
 }
 
-export default function User({ product }: Props) {
+export default function UserComponent({ product }: Props) {
   return (
-    <div className='group relative w-full max-w-xs rounded-xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:shadow-md'>
+    <div
+      className={`
+        group relative w-full max-w-xs rounded-xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:shadow-md
+        ${product.isFriend ? 'bg-green-100' : 'bg-white'}  // Thêm lớp nền thay đổi khi isFriend = true
+      `}
+    >
+      
       {/* Avatar */}
       <div className='relative'>
         <img
-          src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQBeKS_9ibIP5zooDeGTSpmnfzanze0Mi74Ew&s'
+          src={product.avatar}
           alt={product.name}
           className='mx-auto mt-4 h-20 w-20 rounded-full object-cover shadow-md group-hover:scale-105 transition-transform duration-300'
         />
@@ -25,8 +32,10 @@ export default function User({ product }: Props) {
             className='relative'
             renderPopover={
               <div className='w-36 rounded-md border bg-white py-2 shadow-lg text-sm'>
-                <button className='block w-full px-4 py-1 hover:bg-gray-100'>🔍 Kết bạn</button>
-                <button className='block w-full px-4 py-1 hover:bg-gray-100'>😊 Hủy kết bạn</button>
+                
+                {product.isFriend ? (
+                  <button className='block w-full px-4 py-1 hover:bg-gray-100'>😊 Hủy kết bạn</button>
+                ) : <button className='block w-full px-4 py-1 hover:bg-gray-100'>🔍 Kết bạn</button>}
                 <button className='block w-full px-4 py-1 hover:bg-gray-100'>👤 Trang cá nhân</button>
               </div>
             }
@@ -53,22 +62,13 @@ export default function User({ product }: Props) {
 
       {/* Info */}
       <div className='px-4 py-3 text-center space-y-1'>
-        <h3 className='text-sm font-semibold text-gray-800 truncate'>Nguyễn Tấn Thành</h3>
+        <h3 className='text-sm font-semibold text-gray-800 truncate'>{product.name}</h3>
         <p className='text-xs text-gray-500'>
-          🗓️ <span className='font-medium text-gray-700'>20/09/2025</span>
+          <span className='font-medium text-gray-700'>🗓️ {dayjs(product.createdAt).format('DD/MM/YYYY HH:mm')}</span>
         </p>
         <p className='text-xs text-gray-500'>
-          📞 <span className='font-medium text-gray-700'>0333 657 671</span>
+          📞 <span className='font-medium text-gray-700'>{product.phone}</span>
         </p>
-        <Link
-          to={`${path.home}${generateNameId({
-            name: product.name as string,
-            id: product.phone as string
-          })}`}
-          className='mt-2 inline-block rounded-full bg-orange-500 px-3 py-1 text-xs font-medium text-white transition hover:bg-orange-600'
-        >
-          Xem chi tiết
-        </Link>
       </div>
     </div>
   )

@@ -14,3 +14,26 @@ export interface User {
   createdAt: string
   updatedAt: string
 }
+
+export interface GroupReponse {
+  group_id: string
+  role: string
+  joined_at: string
+  group_name: string
+  group_created_at: string
+  group_owner: User
+}
+
+export interface Group {
+  group_id: string
+  role: string
+  joined_at: string
+  group_name: string
+  group_created_at: string
+}
+
+
+export interface FriendListResponse {
+  friends: User[]
+}
+

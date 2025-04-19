@@ -1,10 +1,10 @@
-import { ProductListConfig } from 'src/types/product.type'
+import { UserTListConfig } from 'src/types/product.type'
 import omitBy from 'lodash/omitBy'
 import isUndefined from 'lodash/isUndefined'
 import useQueryParams from './useQueryParams'
 
 export type QueryConfig = {
-  [key in keyof ProductListConfig]: string
+  [key in keyof UserTListConfig]: string
 }
 
 export default function useQueryConfig() {
@@ -13,18 +13,11 @@ export default function useQueryConfig() {
   //Because we don't want to send undefined value to server
   const queryConfig: QueryConfig = omitBy(
     {
-      page: queryParams.page || '1',
+      page: queryParams.page || '0',
       limit: queryParams.limit,
       sort_by: queryParams.sort_by,
-      exclude: queryParams.exclude,
       name: queryParams.name,
-      order: queryParams.order,
-      price_max: queryParams.price_max,
-      price_min: queryParams.price_min,
-      rating_filter: queryParams.rating_filter,
-      category: queryParams.category,
-      category1: queryParams.category1,
-
+      order: queryParams.order
     },
     isUndefined
   )

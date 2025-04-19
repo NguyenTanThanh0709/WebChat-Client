@@ -9,12 +9,13 @@ export interface UserT {
   password_hash?: string
   createdAt: string
   updatedAt: string
+  isFriend?: boolean
 }
 export interface UserTList {
   users: UserT[]
   pagination: {
     page: number
-    limit: number
+    limit: number 
     page_size: number
   }
 }
@@ -24,11 +25,14 @@ export interface UserTListConfig {
   limit?: number | string
   sort_by?: 'createdAt' | 'price' | 'rating' | 'sold' | 'view'
   order?: 'asc' | 'desc'
-  exclude?: string
-  rating_filter?: number | string
-  price_max?: number | string
-  price_min?: number | string
   name?: string
-  category?: string
-  category1?: string
+}
+
+
+export interface FriendTListConfig {
+  name?: string
+}
+
+export interface GroupTListConfig {
+  name?: string
 }

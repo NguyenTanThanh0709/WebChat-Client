@@ -17,3 +17,23 @@ export interface changePassword {
   new_password: string | undefined;
   password: string | undefined;
 }
+
+export interface GroupMemberInfo {
+  group_id: string;
+  user_phone: string;
+  role: 'member' | 'admin' | 'owner';
+  joined_at: string; // ISO date string
+  status: number; // 1 = active
+  name: string;
+  email: string;
+  avatar: string | null;
+  user_status: string; // OFFLINE, ONLINE, etc.
+}
+
+export interface AddMembersBody {
+  memberPhones: string[]
+}
+
+
+
+
