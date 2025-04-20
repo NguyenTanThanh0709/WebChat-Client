@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import Button from 'src/components/Button'
 import { Link } from 'react-router-dom'
 import path from 'src/constants/path'
 import { Category } from 'src/types/category.type'
@@ -12,6 +13,8 @@ interface Props {
 
 export default function AsideFilter({ categories, selectedCategory, onChangeCategory }: Props) {
   const { t } = useTranslation('home')
+
+
 
   return (
     <div className="fixed left-0 top-[8rem] z-20 h-[calc(100vh-8rem)] w-[260px] rounded-2xl border bg-white p-5 shadow-lg">

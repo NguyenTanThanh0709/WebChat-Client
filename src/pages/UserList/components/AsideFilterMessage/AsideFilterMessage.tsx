@@ -24,6 +24,7 @@ interface AsideFilterMessageProps {
 
 
 export default function AsideFilter({ selectedCategory }: AsideFilterMessageProps) {
+  const { t } = useTranslation('home')
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
   const [searchName, setSearchName] = useState('')
   const queryConfig: FriendTListConfig = {
@@ -81,7 +82,7 @@ export default function AsideFilter({ selectedCategory }: AsideFilterMessageProp
 <div className='fixed left-[16rem] top-[8rem] z-20 h-[calc(100vh-8rem)] w-[400px] overflow-y-auto rounded-sm border-2 bg-white p-4 shadow-md'>
       <Link to={path.home} className='flex items-center font-bold'>
         <TfiMenuAlt className='mr-3 h-4 w-3 fill-current' />
-        KẾT QUẢ BỘ LỌC
+        {t('aside filter.filter friend group')}
       </Link>
       <div className='mt-4 mb-2 h-[1px] bg-gray-300' />
 

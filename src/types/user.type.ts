@@ -37,3 +37,10 @@ export interface FriendListResponse {
   friends: User[]
 }
 
+
+
+export interface FriendRequest {
+  senderPhone: string
+  receiverPhone: string
+}
+

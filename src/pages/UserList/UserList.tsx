@@ -16,7 +16,7 @@ import UserComponent from './components/User/User'
 
 export default function UserList() {
   const queryConfig = useQueryConfig()
-
+  const [selectedCategory, setSelectedCategory] = useState('1')
   const { data: profileDataLS, refetch } = useQuery<User>({
     queryKey: ['profile'],
     queryFn: async () => {
@@ -31,7 +31,7 @@ export default function UserList() {
     queryFn: () => {
       return userApi.getListUser(queryConfig as UserTListConfig, profileDataLS?.phone as string)
     },
-    enabled: !!profileDataLS?.phone,
+    enabled: !!profileDataLS?.phone && selectedCategory === '3',
     keepPreviousData: true,
     staleTime: 3 * 60 * 1000
   })
@@ -52,7 +52,7 @@ export default function UserList() {
   ]
 
     // ✅ Bắt đầu dùng useState để lưu category đang chọn
-    const [selectedCategory, setSelectedCategory] = useState('1')
+    
       // ✅ Hàm xử lý khi người dùng chọn category
   const handleChangeCategory = (categoryId: string) => {
     setSelectedCategory(categoryId)
@@ -98,7 +98,7 @@ export default function UserList() {
               <div className='mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4'>
                 {productsData.data.data.users.map((product: ProductType) => (
                   <div className='col-span-1' key={product.phone}>
-                    <UserComponent product={product} />
+                    <UserComponent product={product} profileDataLS={profileDataLS as User} />
                   </div>
                 ))}
               </div>

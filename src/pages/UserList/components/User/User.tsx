@@ -1,22 +1,78 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import Popover from 'src/components/Popover'
-import path from 'src/constants/path'
+import { createSearchParams, Link, useNavigate } from 'react-router-dom'
 import { UserT as ProductType } from 'src/types/product.type'
 import { generateNameId } from 'src/utils/utils'
 import dayjs from 'dayjs'
+import { User } from 'src/types/user.type'
+import { toast } from 'react-toastify'
+import friendApi from 'src/apis/friend.api'
+
+import omit from 'lodash/omit'
+import path from 'src/constants/path'
+import { QueryConfig } from 'src/hooks/useQueryConfig'
+
 
 interface Props {
   product: ProductType
+  profileDataLS: User
 }
 
-export default function UserComponent({ product }: Props) {
+export default function UserComponent({ product, profileDataLS }: Props) {
+  const [isSending, setIsSending] = useState(false)
+  const [isUnfriend, setIsUnfriend] = useState(false)
+  const navigate = useNavigate()
+
+  const handleUnfriend = async () => {
+
+    console.log({
+      senderPhone: profileDataLS.phone as string,
+      receiverPhone: product.phone as string
+    })
+    try {
+      setIsUnfriend(true)
+      var res = await friendApi.unfriend({
+        senderPhone: profileDataLS.phone as string,
+        receiverPhone: product.phone as string
+      })
+      
+      toast.success(res.data)
+    } catch (error) {
+      console.error(error)
+      toast.error((error as any)?.response?.data?.message || 'Lỗi hủy kết bạn')
+    } finally {
+      setIsUnfriend(false)
+    }
+  }
+  const handleSendFriendRequest = async ( ) => {
+    try {
+      setIsSending(true)
+      var res = await friendApi.sendFriendRequest({
+        senderPhone: profileDataLS.phone as string,
+        receiverPhone: product.phone as string
+      })
+      if (res.data === 'You can not send a friend request to yourself') {
+        toast.warning(res.data)
+      }else{
+        toast.success(res.data)
+      }
+      // Có thể cập nhật lại UI ở đây, ví dụ:
+      // refetchFriendList()
+    } catch (error) {
+      console.error(error)
+      toast.error((error as any)?.response?.data?.message || 'Lỗi gửi lời mời kết bạn')
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   return (
-    <div
-      className={`
-        group relative w-full max-w-xs rounded-xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:shadow-md
-        ${product.isFriend ? 'bg-green-100' : 'bg-white'}  // Thêm lớp nền thay đổi khi isFriend = true
-      `}
-    >
+<div
+  className={`group relative w-full max-w-xs rounded-xl border border-gray-200 shadow-sm transition duration-300 hover:shadow-md ${
+    product.isFriend ? 'bg-green-100' : 'bg-white'
+  }`}
+>
+
       
       {/* Avatar */}
       <div className='relative'>
@@ -34,8 +90,17 @@ export default function UserComponent({ product }: Props) {
               <div className='w-36 rounded-md border bg-white py-2 shadow-lg text-sm'>
                 
                 {product.isFriend ? (
-                  <button className='block w-full px-4 py-1 hover:bg-gray-100'>😊 Hủy kết bạn</button>
-                ) : <button className='block w-full px-4 py-1 hover:bg-gray-100'>🔍 Kết bạn</button>}
+                  <button className='block w-full px-4 py-1 hover:bg-gray-100'
+                  onClick={handleUnfriend}
+                  disabled={isUnfriend}
+                  >😊 Hủy kết bạn</button>
+                ) : <button
+                onClick={handleSendFriendRequest}
+                disabled={isSending}
+                className='block w-full px-4 py-1 hover:bg-gray-100 disabled:opacity-50'
+              >
+                🔍 {isSending ? 'Đang gửi...' : 'Kết bạn'}
+              </button>}
                 <button className='block w-full px-4 py-1 hover:bg-gray-100'>👤 Trang cá nhân</button>
               </div>
             }

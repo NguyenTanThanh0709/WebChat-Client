@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-toastify'
 import clsx from 'clsx'
 import { useMutation } from '@tanstack/react-query'
 import friendApi from 'src/apis/friend.api'
@@ -73,6 +74,7 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
         onSuccess: () => {
       // Dùng queryClient để refetch lại groupList
       queryClient.invalidateQueries(['groupList', profileDataLS?.phone])  // Invalidate queryKey của groupList
+      toast.success('Đã tạo nhóm thành công!');
 
       setGroupName('') // Reset lại tên group
         },
@@ -91,6 +93,7 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
         : [...prevSelected, phone]
     )
   }
+  const { t } = useTranslation('home')
 
 
   const [selectedFeature, setselectedFeature] = useState<string | null>(null);
@@ -150,6 +153,7 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
       queryClient.invalidateQueries(['groupMembers', selectedGroupId]) // Optional: refetch member list
       setSelectedFriendsToAdd([])
       handleCloseModalAddMembers()
+      toast.success('Đã thêm thành viên thành công!');
     } catch (err) {
       console.error('Lỗi khi thêm thành viên:', err)
     }
@@ -160,7 +164,7 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
   
     try {
       // Call the API to remove the member from the group
-      await GroupApi.removeMembersFromGroup(groupId, profileDataLS.phone);
+      const response = await GroupApi.removeMembersFromGroup(groupId, profileDataLS.phone);
   
       // Optionally, invalidate queries to refresh the group list
       queryClient.invalidateQueries(['groupList', profileDataLS?.phone]);
@@ -168,6 +172,12 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
       // Reset selected group and close the modal
       setSelectedGroupId(null);
       setIsModalOpen(false);
+
+      if (response.data == 'Failed') {
+        toast.warning('Bạn là chủ nhóm nên không thể rời!');
+      } else {
+        toast.success('Đã rời nhóm thành công!');
+      }
   
       // Optionally, display success message
       console.log('Successfully left the group');
@@ -207,7 +217,7 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
 <div className='fixed left-[16rem] top-[8rem] z-20 h-[calc(100vh-8rem)] w-[400px] overflow-y-auto rounded-sm border-2 bg-white p-4 shadow-md'>
       <Link to={path.home} className='flex items-center font-bold'>
         <TfiMenuAlt className='mr-3 h-4 w-3 fill-current' />
-        KẾT QUẢ BỘ LỌC
+        {t('aside filter.filter friend group')}
       </Link>
       <div className='mt-4 mb-2 h-[1px] bg-gray-300' />
 
