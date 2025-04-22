@@ -15,6 +15,9 @@ import { useQuery  } from '@tanstack/react-query'
 import { User, FriendListResponse } from 'src/types/user.type'
 import friendApi from 'src/apis/friend.api'
 import { FriendTListConfig } from 'src/types/product.type'
+import { useMessages } from 'src/contexts/MessagesContext'
+import { GetMessagesQuery } from 'src/types/utils.type'
+
 
 
 
@@ -25,6 +28,7 @@ interface AsideFilterMessageProps {
 
 export default function AsideFilter({ selectedCategory }: AsideFilterMessageProps) {
   const { t } = useTranslation('home')
+  const { setMessagesData, setUserData, setGroupResponse } = useMessages();
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
   const [searchName, setSearchName] = useState('')
   const queryConfig: FriendTListConfig = {
@@ -49,15 +53,7 @@ export default function AsideFilter({ selectedCategory }: AsideFilterMessageProp
     enabled: selectedCategory === '1' && !!phone
   })
 
-  console.log(friendList)
   
-
-  // Dummy data
-  const recipientUser = {
-    _id: '12345',
-    name: 'John Doe',
-    avatar: 'https://www.w3schools.com/w3images/avatar2.png'
-  }
 
   const latestMessage = {
     text: 'Hey! How are you?',
@@ -77,6 +73,19 @@ export default function AsideFilter({ selectedCategory }: AsideFilterMessageProp
     }
     return shortText
   }
+
+
+  const handleClick = (phoneReceiver: User) => {
+    setSelectedFriendId(phoneReceiver.phone as string || null)
+    const data: GetMessagesQuery = {
+      sender: phone as string,
+      receiver: phoneReceiver.phone as string,
+      is_group: false,
+    };
+    setMessagesData(data); // Sử dụng context để lưu dữ liệu
+    setUserData(phoneReceiver)
+    setGroupResponse(null)
+  };
 
   return (
 <div className='fixed left-[16rem] top-[8rem] z-20 h-[calc(100vh-8rem)] w-[400px] overflow-y-auto rounded-sm border-2 bg-white p-4 shadow-md'>
@@ -105,7 +114,7 @@ export default function AsideFilter({ selectedCategory }: AsideFilterMessageProp
           return (
             <li key={friend.phone} className='py-2 relative'>
               <button
-                onClick={() => setSelectedFriendId(friend.phone as string || null)}
+                onClick={() => handleClick(friend)}
                 className='w-full text-left'
               >
                 {isActive && (

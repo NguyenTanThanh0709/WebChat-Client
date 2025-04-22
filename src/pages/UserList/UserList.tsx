@@ -13,6 +13,8 @@ import { Head } from 'src/components/head'
 import ChatBox from './components/ChatBox'
 import { User } from 'src/types/user.type'
 import UserComponent from './components/User/User'
+import { MessagesProvider } from 'src/contexts/MessagesContext';
+
 
 export default function UserList() {
   const queryConfig = useQueryConfig()
@@ -35,15 +37,8 @@ export default function UserList() {
     keepPreviousData: true,
     staleTime: 3 * 60 * 1000
   })
-  console.log(productsData?.data.data)
+  // console.log(productsData?.data.data)
 
-  // Product list use query to get data from server
-  // const { data: categoriesData } = useQuery({
-  //   queryKey: ['categories'],
-  //   queryFn: () => {
-  //     return categoryApi.getCategories()
-  //   }
-  // })
 
   const categoriesDataFEATURE = [
     { _id: '1', name: 'Bạn bè' ,icon:'✅' },
@@ -51,14 +46,15 @@ export default function UserList() {
     { _id: '3', name: 'Tìm kiếm người dùng', icon:'💻' }
   ]
 
-    // ✅ Bắt đầu dùng useState để lưu category đang chọn
-    
-      // ✅ Hàm xử lý khi người dùng chọn category
+
   const handleChangeCategory = (categoryId: string) => {
     setSelectedCategory(categoryId)
   }
 
+  
+
   return (
+    <MessagesProvider>
     <div className='bg-gray-200 py-6'>
       <Head title={'Trang chủ | Shopee Clone'} />
       <div className='container-fluid'>
@@ -119,5 +115,6 @@ export default function UserList() {
         </div>
       </div>
     </div>
+    </MessagesProvider>
   )
 }
