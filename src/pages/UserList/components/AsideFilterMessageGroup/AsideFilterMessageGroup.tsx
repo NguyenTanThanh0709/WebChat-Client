@@ -15,11 +15,12 @@ import { NoUndefinedField } from 'src/types/utils.type'
 import { QueryConfig } from 'src/hooks/useQueryConfig'
 import { useTranslation } from 'react-i18next'
 import { useQuery ,useQueryClient  } from '@tanstack/react-query'
-import { User, FriendListResponse } from 'src/types/user.type'
+import { User, FriendListResponse, GroupReponse } from 'src/types/user.type'
 import GroupApi from 'src/apis/group.api'
 import { FriendTListConfig } from 'src/types/product.type'
 import Popover from 'src/components/Popover'
-
+import { useMessages } from 'src/contexts/MessagesContext'
+import { GetMessagesQuery } from 'src/types/utils.type'
 
 
 interface AsideFilterMessageProps {
@@ -34,6 +35,8 @@ interface CreateGroupBody {
 
 export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilterMessageProps) {
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
+  const { setMessagesData, setUserData, setGroupResponse } = useMessages();
+
   const [searchName, setSearchName] = useState('')
   const queryConfig: FriendTListConfig = {
     name: searchName
@@ -60,7 +63,6 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
     enabled: selectedCategory === '2' && !!phone,
   })
 
-  console.log(groupList)
   const queryClient = useQueryClient()
   const createGroupMutation = useMutation((body: CreateGroupBody) =>
     GroupApi.createGroup(body)
@@ -143,11 +145,22 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
     setselectedFeature(null);
   };
 
+  const handleClick = (group: GroupReponse) => {
+    setSelectedFriendId(group.group_id as string || null)
+    const data: GetMessagesQuery = {
+      sender: phone as string,
+      receiver: group.group_id as string,
+      is_group: true,
+    };
+    setMessagesData(data); // Sử dụng context để lưu dữ liệu
+    setUserData(null)
+    setGroupResponse(group)
+  };
+
 
   const handleAddPeopleToGroup = async () => {
     if (!selectedGroupId || selectedFriendsToAdd.length === 0) return
   
-    console.log(selectedFriendsToAdd)
     try {
       await GroupApi.addMembersToGroup(selectedGroupId, { memberPhones: selectedFriendsToAdd })
       queryClient.invalidateQueries(['groupMembers', selectedGroupId]) // Optional: refetch member list
@@ -187,12 +200,7 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
   };
   
 
-  // Dummy data
-  const recipientUser = {
-    _id: '12345',
-    name: 'John Doe',
-    avatar: 'https://www.w3schools.com/w3images/avatar2.png'
-  }
+
 
   const latestMessage = {
     text: 'Hey! How are you?',
@@ -266,7 +274,7 @@ export default function AsideFilterMessageGroup({ selectedCategory }: AsideFilte
     return (
       <li key={group.group_id} className='py-2 relative'>
         <button
-          onClick={() => setSelectedFriendId(group.group_id as string || null)}
+        onClick={() => handleClick(group)}
           className='w-full text-left'
         >
           {isActive && (

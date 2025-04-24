@@ -12,15 +12,23 @@ import { v4 as uuidv4 } from "uuid"; // npm install uuid
 import { storage } from 'src/configs/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-const ChatBox: React.FC = () => {
+interface AsideFilterMessageProps {
+  selectedCategory: string
+}
+
+export default function ChatBox({ selectedCategory }: AsideFilterMessageProps)  {
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [textMessage, setTextMessage] = useState<string>("");
   const scroll = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { messagesData, userData, groupResponse } = useMessages();
-  // console.log(messagesData)
-  // console.log(userData)
-  // console.log(groupResponse)
+  const [allMessages, setAllMessages] = useState<IMessage[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+    console.log(messagesData)
+    console.log(userData)
+    console.log(groupResponse)
 
   const { data: messageList, isLoading, error, refetch} = useQuery({
     queryKey: ['messageList', messagesData],
@@ -31,6 +39,62 @@ const ChatBox: React.FC = () => {
     keepPreviousData: true,
     staleTime: 3 * 60 * 1000
   })
+
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!messagesData) return;
+  
+    fetchMessages().then((newMessages) => {
+      setAllMessages(newMessages);
+      setTimeout(() => {
+        scroll?.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    });
+  }, [messagesData]);
+  
+
+  const fetchMessages = async (lastTimestamp?: string) => {
+    if (!messagesData) return [];
+  
+    const query: GetMessagesQuery = {
+      ...messagesData,
+      limit: 5,
+      lastMessageTimestamp: lastTimestamp,
+    };
+  
+    const response = await messagesApi.getMessage(query);
+    return response.data;
+  };
+
+  useEffect(() => {
+    const handleScroll = async () => {
+      const container = chatBodyRef.current;
+      if (!container) return;
+  
+      if (container.scrollTop === 0 && allMessages.length > 0) {
+        setLoadingMore(true);
+        const firstMsg = allMessages[0];
+        const moreMessages = await fetchMessages(firstMsg.timestamp as unknown as string);
+  
+        if (moreMessages.length > 0) {
+          const scrollHeightBefore = container.scrollHeight;
+          setAllMessages((prev) => [...moreMessages, ...prev]);
+  
+          setTimeout(() => {
+            const scrollHeightAfter = container.scrollHeight;
+            container.scrollTop = scrollHeightAfter - scrollHeightBefore;
+          }, 1000);
+        }
+        setLoadingMore(false);
+      }
+    };
+  
+    const container = chatBodyRef.current;
+    container?.addEventListener("scroll", handleScroll);
+    return () => container?.removeEventListener("scroll", handleScroll);
+  }, [allMessages]);
+  
 
   const { data: profileDataLS } = useQuery<User>({
     queryKey: ['profile'],
@@ -43,8 +107,6 @@ const ChatBox: React.FC = () => {
 
   const PhoneSender = profileDataLS?.phone || ''
 
-
-  // console.log(messageList)
 
   useEffect(() => {
     scroll?.current?.scrollIntoView({ behavior: "smooth" });
@@ -73,7 +135,7 @@ const ChatBox: React.FC = () => {
       text: message,
       sender: PhoneSender,
       receiver: userData?.phone || '',
-      is_group: false,
+      is_group: selectedCategory === '1' ? false : true,
       content_type: 'text'
     };
     mutationSendMessage.mutate(newMsg);
@@ -83,22 +145,7 @@ const ChatBox: React.FC = () => {
     clearInput("");
   };
 
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = e.target.files?.[0];
-  //   if (!file) return;
-  
-  //   const fileUrl = URL.createObjectURL(file);
-  
-  //   const newMsg: Message = {
-  //     senderId: user._id,
-  //     text: "",
-  //     createdAt: new Date().toISOString(),
-  //     fileUrl,
-  //     fileName: file.name,
-  //   };
-  
-  //   setMessages((prev) => [...prev, newMsg]);
-  // };
+
   const [file, setFile] = useState<File>()
   
   useEffect(() => {
@@ -137,7 +184,7 @@ const ChatBox: React.FC = () => {
         const newMsg: IMessage = {
           sender: PhoneSender,
           receiver: userData?.phone || '',
-          is_group: false,
+          is_group: selectedCategory === '1' ? false : true,
           content_type: 'image',
           
           url_file: downloadURL,
@@ -168,7 +215,7 @@ const ChatBox: React.FC = () => {
       timestamp: new Date(),
       status: 'sent',
       receiver: userData?.phone || '',
-      is_group: false,
+      is_group: selectedCategory === '1' ? false : true,
     };
 
     // TODO: Replace with API call or message state update
@@ -177,11 +224,49 @@ const ChatBox: React.FC = () => {
     setPreviewImage(null);
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("📁 File input triggered");
+
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) {
+      console.warn("⚠️ No file selected");
+      return;
+    }
+  
+    console.log("✅ Selected file:", selectedFile.name);
+  
+    const uniqueId = uuidv4();
+    const storageRef = ref(storage, `files/${uniqueId}_${selectedFile.name}`);
+  
+    try {
+      const snapshot = await uploadBytes(storageRef, selectedFile);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+  
+      const newMsg: IMessage = {
+        sender: PhoneSender,
+        receiver: userData?.phone || '',
+        is_group: false,
+        content_type: selectedFile.type.startsWith("video") ? 'video' : 'file',
+        url_file: downloadURL,
+        name_file: selectedFile.name,
+        size_file: selectedFile.size.toString(),
+        mime_type_file: selectedFile.type,
+        duration_video: "0", // Nếu có video duration, bạn có thể xử lý thêm
+      };
+  
+      mutationSendMessage.mutate(newMsg);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Upload file thất bại');
+    }
+  };
+  
+
   return (
 <div className="max-w-2xl mx-auto h-[90vh] flex flex-col border rounded-xl shadow-md overflow-hidden bg-white">
   {/* Header */}
   <div className="flex justify-between items-center p-4 bg-green-50 border-b font-semibold text-gray-800">
-    <span>💬 {userData?.name}</span>
+    <span>💬 {groupResponse ? `Nhóm: ${groupResponse.group_name}` : `Bạn: ${userData?.name}`}</span>
     <div className="flex items-center gap-3">
       <button
         onClick={() => alert("Đang gọi thoại...")}
@@ -208,11 +293,14 @@ const ChatBox: React.FC = () => {
   </div>
 
   {/* Chat body */}
-  <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2 bg-gray-50">
-    {messageList?.data.map((message, index) => (
+  <div ref={chatBodyRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-2 bg-gray-50">
+    {loadingMore && (
+      <div className="text-center text-sm text-gray-400">Đang tải thêm...</div>
+    )}
+    {allMessages?.map((message, index) => (
       <div
         key={index}
-        ref={scroll}
+        ref={index === allMessages.length - 1 ? scroll : null}
         className={`max-w-[70%] p-3 rounded-xl text-sm shadow-sm ${
           message.sender === profileDataLS?.phone
             ? "ml-auto bg-green-500 text-white"
@@ -220,29 +308,15 @@ const ChatBox: React.FC = () => {
         }`}
       >
 
-    {/* Nếu là ảnh thì hiển thị ảnh */}
-    {message.url_file && message.content_type === 'image' && (
-      <div className="mb-2">
-        <img
-          src={message.url_file}
-          alt={message.name_file || "Image"}
-          className="rounded-lg max-w-full w-[100%] max-h-[300px] object-contain"
-        />
-      </div>
-    )}
-
-        { (message.url_file  && (message.content_type === 'video' || message.content_type === 'file'))? (
-          <div className="mb-1">
-            <a
-              href={message.url_file}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline text-sm"
-            >
-              📎 {message.name_file}
-            </a>
-          </div>
-        ) : null}
+            {message.url_file && message.content_type === 'image' && (
+              <img src={message.url_file} alt={message.name_file || "Image"} className="rounded-lg max-w-full w-full max-h-[300px] object-contain mb-2" />
+            )}
+            {message.url_file && message.content_type === 'video' && (
+              <video controls className="rounded-lg w-full max-w-xs max-h-[300px] object-contain mb-2" src={message.url_file} />
+            )}
+            {message.url_file && message.content_type === 'file' && (
+              <a href={message.url_file} target="_blank" rel="noopener noreferrer" className="underline text-sm block mb-1">📎 {message.name_file}</a>
+            )}
 
         
         <span>{message.text}</span>
@@ -252,6 +326,8 @@ const ChatBox: React.FC = () => {
           lastWeek: "dddd HH:mm",              // Nếu là tuần trước, hiển thị tên ngày trong tuần và giờ
           sameElse: "DD/MM/YYYY HH:mm:ss",    // Nếu không phải trong các trường hợp trên, hiển thị đầy đủ ngày giờ
         })}
+
+<div ref={messagesEndRef}></div>
 
         </div>
       </div>
@@ -273,6 +349,9 @@ const ChatBox: React.FC = () => {
             </button>
           </div>
         )}
+{/* Thêm ref vào đây - cuối cùng */}
+<div ref={messagesEndRef}></div>
+        
   </div>
 
   {/* Input */}
@@ -281,8 +360,8 @@ const ChatBox: React.FC = () => {
     <div className="relative">
       <input
         type="file"
-        accept="image/*,.pdf,.doc,.docx"
-        // onChange={handleFileChange}
+        accept="video/*,.pdf,.doc,.docx"
+        onChange={handleFileChange}
         className="absolute inset-0 opacity-0 cursor-pointer"
       />
       <div
@@ -324,4 +403,3 @@ const ChatBox: React.FC = () => {
   );
 };
 
-export default ChatBox;

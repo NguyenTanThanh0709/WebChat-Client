@@ -106,7 +106,7 @@ export default function UserList() {
           ) : null
         ) : (
           <div className='sticky z-10 col-span-7'>
-            <ChatBox />
+            <ChatBox selectedCategory={selectedCategory} />
           </div>
         )}
 
