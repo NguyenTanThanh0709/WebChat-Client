@@ -12,7 +12,7 @@ const Profile = lazy(() => import('./pages/User/pages/Profile'))
 const Register = lazy(() => import('./pages/Register'))
 const ChangePassword = lazy(() => import('./pages/User/pages/ChangePassword'))
 const NotFound = lazy(() => import('./pages/NotFound'))
-
+const UserP = lazy(() => import('./pages/UserP'))
 function ProtectedRoute() {
   const { isAuthenticated } = useContext(AppContext)
   return isAuthenticated ? <Outlet /> : <Navigate to='/login' />
@@ -72,6 +72,14 @@ export default function useRouteElements() {
           ]
         }
       ]
+    },
+    {
+      path: 'profile/:phone',
+      element: (
+        <MainLayout>
+          <UserP />
+        </MainLayout>
+      )
     },
     {
       path: '',

@@ -1,6 +1,6 @@
 import { AiOutlineBell } from 'react-icons/ai'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import authApi from 'src/apis/auth.api'
@@ -14,27 +14,35 @@ import { formatCurrency, getAvatarUrl } from 'src/utils/utils'
 import Popover from '../Popover'
 import { locales } from 'src/i18n/i18n'
 import { useTranslation } from 'react-i18next'
+import notificationApi from 'src/apis/notification.api'
+import { Notification } from 'src/types/utils.type'
+import moment from 'moment'
+import { useNavigate } from 'react-router-dom'
+import friendApi from 'src/apis/friend.api'
+import { FriendRequest } from 'src/types/user.type'
+
 
 const MAX_PURCHASES = 5
 export default function Header() {
   const { i18n } = useTranslation()
+  const navigate = useNavigate()
   const currentLanguage = locales[i18n.language as keyof typeof locales]
   const { setIsAuthenticated, isAuthenticated, setProfile, profile } = useContext(AppContext)
   const { register, onSubmitSearch } = useSearchProduct()
   const queryClient = useQueryClient()
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
 
-  // when us direct then header just re-render
-  // not unmount - mount again
-  // except of course case logout then jump to RegisterLayout comback in case
-  // should queries not have inactive => not call again > unecessary set stale: infinity
-  // const { data: purchasesInCartData } = useQuery({
-  //   queryKey: ['purchases', { status: purchasesStatus.inCart }],
-  //   queryFn: () => purchaseApi.getPurchases({ status: purchasesStatus.inCart }),
-  //   // explain : here, we don't want to call api when user is not authenticated
-  //   enabled: isAuthenticated
-  // })
-  // const purchasesInCart = purchasesInCartData?.data?.data
 
+  // console.log(profile)
+
+  const { data: notifications, isLoading, error,   } = useQuery({
+    queryKey: ['notifications', profile?.phone, currentPage],
+    queryFn: () => notificationApi.getNotifications(profile?.phone || '', { page: currentPage, limit: itemsPerPage }).then(res => res.data),
+    enabled: !!profile?.phone
+  })
+
+  console.log(notifications)
   const logoutMutation = useMutation(authApi.logoutAccount)
   // handle logout mutate
   const handleLogout = () => {
@@ -53,6 +61,78 @@ export default function Header() {
     console.log('change')
     i18n.changeLanguage(lng)
   }
+
+
+  const handleClickNotification = async (purchase: Notification) => {
+    console.log(purchase)
+    try {
+      await notificationApi.updateNotification(purchase._id, {
+        ...purchase,
+        status: 'read'
+      })
+    if (purchase.type === 'friend_accept' || purchase.type === 'friend_remove') {
+      navigate('/profile/' + purchase.sender)
+    }
+    if (purchase.type === 'message') {
+      // navigate('/profile/' + purchase.sender)
+    }
+  } catch (error) {
+    console.error(error)
+      toast.error((error as any)?.response?.data?.message || 'Lỗi gửi lời mời kết bạn')
+    }
+  }
+
+  const handleAcceptFriend = async (purchase: Notification) => {
+    const body: FriendRequest = {
+      senderPhone: purchase.receiver,
+      receiverPhone: purchase.sender
+    }
+    try {
+      await notificationApi.updateNotification(purchase._id, {
+        ...purchase,
+        status: 'read'
+      })
+      var res = await friendApi.sendFriendRequest(body)
+      if (res.data === 'You can not send a friend request to yourself') {
+        toast.warning(res.data)
+    }else{
+        toast.success(res.data)
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error((error as any)?.response?.data?.message || 'Lỗi gửi lời mời kết bạn')
+    }
+  }
+
+  const handleDeclineFriend = async (purchase: Notification) => {
+    console.log(purchase)
+    const body: FriendRequest = {
+      senderPhone: purchase.sender,
+      receiverPhone: purchase.receiver
+    }
+    try {
+      await notificationApi.updateNotification(purchase._id, {
+        ...purchase,
+        status: 'read'
+      })
+      var res = await friendApi.unfriend(body)
+      toast.success(res.data)
+    } catch (error) {
+      console.error(error)
+      toast.error((error as any)?.response?.data?.message || 'Lỗi gửi lời mời kết bạn')
+    }
+  }
+  
+  const indexOfLastItem = currentPage * itemsPerPage
+const indexOfFirstItem = indexOfLastItem - itemsPerPage
+const currentNotifications = notifications?.slice(indexOfFirstItem, indexOfLastItem)
+
+const totalPages = Math.ceil(notifications?.length || 0 / itemsPerPage)
+
+
+
+
+
   return (
     <div className='sticky top-0 z-20 bg-lime-200  pb-5 pt-2 text-white transition-[transform.2scubic-bezier(.4,0,.2,1)]'>
       <div className='container'>
@@ -80,6 +160,7 @@ export default function Header() {
           </div>
           <div className='flex justify-end'>
             <Popover
+            
               as={'span'}
               className='relative flex cursor-pointer items-center py-1 hover:text-red-300 text-orange'
               renderPopover={
@@ -213,39 +294,67 @@ export default function Header() {
               </button>
             </div>
           </form>
-          {/* <div className='col-span-1 justify-self-end'>
+          <div className='col-span-1 justify-self-end'>
             <Popover
               placement='bottom-end'
               renderPopover={
                 <div className='relative  max-w-[400px] rounded-sm border border-gray-200 bg-white text-sm shadow-md'>
-                  {purchasesInCart && purchasesInCart.length > 0 ? (
+                  {notifications && notifications.length > 0 ? (
                     <div className='p-2'>
                       <div className='capitalize text-gray-400'>Thông báo mới thêm</div>
                       <div className='mt-5'>
-                        {purchasesInCart.slice(0, MAX_PURCHASES).map((purchase) => (
-                          <div className='mt-2 flex py-2 hover:bg-gray-100' key={purchase._id}>
+                        {notifications.slice(0, MAX_PURCHASES).map((purchase) => (
+                          <div onClick={() => handleClickNotification(purchase)} className='mt-2 cursor-pointer flex p-2 hover:bg-gray-100 bg-gray-200' key={purchase._id}>
                             <div className='flex-shrink-0'>
-                              <img
-                                src='data:image/jpeg;base64,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'
-                                alt={purchase.product.name}
-                                className="h-12 w-12 object-cover rounded-full"
-                              />
+                            <img
+                              src={
+                                purchase.type === 'message'
+                                  ? 'https://cdn.tgdd.vn/hoi-dap/929605/cach-tat-tu-dong-luu-anh-tren-messenger-100.jpg'
+                                  : 'https://png.pngtree.com/png-clipart/20190705/original/pngtree-vector-notification-icon-png-image_4187244.jpg'
+                              }
+                              alt={purchase.sender}
+                              className="h-12 w-12 object-cover rounded-full"
+                            />
+
+   
                             </div>
                             <div className="ml-3 flex-grow overflow-hidden">
-                              <div className="text-sm font-medium truncate text-gray-800">
-                              Nguyễn Tấn Thành sent you message
+                              <div className="text-sm font-medium text-gray-800">
+                              {purchase.content}
                               </div>
                             </div>
                             <div className='ml-2 flex-shrink-0'>
-                              <span className='text-orange'>2025/03/20 12:03</span>
+                              <div className='text-orange'>
+                              {moment(purchase.timestamp).calendar(undefined, {
+                                lastDay: "[Hôm qua] HH:mm",          // Nếu là hôm qua, hiển thị "Hôm qua" và giờ
+                                lastWeek: "dddd HH:mm",              // Nếu là tuần trước, hiển thị tên ngày trong tuần và giờ
+                                sameElse: "DD/MM/YYYY HH:mm:ss",    // Nếu không phải trong các trường hợp trên, hiển thị đầy đủ ngày giờ
+                              })}
+                              </div>
+                              <div className='text-xs text-gray-500 mt-2'>
+                                {purchase.status === 'unread' && (
+                                  <span className="ml-2 inline-block h-3 w-3 rounded-full bg-blue-500" />
+                                )}
+                              </div>
+                              {(purchase.type === 'friend_request' && purchase.status === 'unread') && (
+                                <div className="mt-2 flex">
+                                  <button onClick={() => handleAcceptFriend(purchase)} className="px-4 py-2 bg-green-500 text-white rounded-md mr-2">
+                                    Accept
+                                  </button>
+                                  <button onClick={() => handleDeclineFriend(purchase)} className="px-4 py-2 bg-red-500 text-white rounded-md">
+                                    Decline
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
                       </div>
+
                       <div className='mt-6 flex items-center justify-between'>
                         <div className='text-xs capitalize text-gray-500'>
-                          {purchasesInCart.length > MAX_PURCHASES && (
-                              <span>{purchasesInCart.length - MAX_PURCHASES} more marked as read</span>
+                          {notifications.length > MAX_PURCHASES && (
+                              <span>{notifications.length - MAX_PURCHASES} more marked as read</span>
                             )}
                         </div>
                       </div>
@@ -256,19 +365,38 @@ export default function Header() {
                       <div className='mt-3 capitalize'>Chưa có thông báo</div>
                     </div>
                   )}
+                                <div className=' m-4 flex justify-center gap-2'>
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
+                  className={`px-3 py-1 rounded bg-gray-200 text-sm ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
+                >
+                  Prev
+                </button>
+                <span className="text-sm text-gray-600">Page {currentPage} / {totalPages}</span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  className={`px-3 py-1 rounded bg-gray-200 text-sm ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`}
+                >
+                  Next
+                </button>
+              </div>
                 </div>
               }
             >
               <Link to={path.cart} className='relative'>
               <AiOutlineBell className='w-8 h-8 text-orange' />
-                {purchasesInCart && purchasesInCart.length > 0 && (
+                {notifications && notifications.length > 0 && (
                   <span className='absolute top-[-5px] right-[-10px] rounded-full bg-white px-[9px] py-[1px] text-xs text-orange '>
-                    {purchasesInCart?.length}
+                    {notifications?.length}
                   </span>
                 )}
               </Link>
+
+
             </Popover>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

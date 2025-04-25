@@ -63,3 +63,30 @@ export interface GetMessagesQuery {
   limit?: number; // Số lượng tin nhắn lấy về, mặc định 5
   lastMessageTimestamp?: string; // Thời gian của tin nhắn cuối cùng để lấy tin nhắn sau nó
 }
+
+
+export interface Notification {
+  _id: string;
+  type: 'friend_request' | 'friend_accept' | 'friend_remove' | 'message';
+  content: string;
+  sender: string;
+  receiver: string;
+  status: 'unread' | 'read';
+  is_group: boolean;
+  timestamp: string;
+  __v: number;
+}
+
+export interface CreateNotificationInput {
+  type: 'friend_request' | 'friend_accept' | 'friend_remove' | 'message';
+  content: string;
+  sender: string;
+  receiver: string;
+  is_group: boolean;
+}
+
+
+export interface GetNotificationsQuery {
+  limit?: number; // Số lượng tin nhắn lấy về, mặc định 5
+  page?: number; // Thời gian của tin nhắn cuối cùng để lấy tin nhắn sau nó
+}
